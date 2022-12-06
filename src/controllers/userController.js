@@ -27,6 +27,17 @@ let handleLogin = async (req, res) => {
     });
 };
 
+let handleGetUserInfo = async (req, res) => {
+    let userId = req.body.id;
+
+    let data = await userService.handleGetUserInfo(userId);
+
+    return res.status(200).json({
+        ...data,
+    });
+};
+
 module.exports = {
     handleLogin: handleLogin,
+    handleGetUserInfo: handleGetUserInfo,
 };

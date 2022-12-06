@@ -18,7 +18,7 @@ let initWebRoutes = (app) => {
     //call api
 
     router.post('/api/login', userController.handleLogin);
-
+    router.get('/api/get-user-info', userController.handleGetUserInfo);
     return app.use('/', router);
 };
 

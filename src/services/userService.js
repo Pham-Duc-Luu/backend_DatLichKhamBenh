@@ -47,6 +47,55 @@ let checkExistUser = (email) => {
     });
 };
 
+let handleGetUserInfo = (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let userData = {};
+            if (!id) {
+                resolve({
+                    errCode: 1,
+                    message: 'missing parameter',
+                    userData,
+                });
+            } else {
+                if (id === 'ALL') {
+                    userData = await db.User.findAll({
+                        attributes: { exclude: ['password'] },
+                    });
+                    resolve({
+                        errCode: 0,
+                        message: 'successful!',
+                        userData,
+                    });
+                } else {
+                    userData = await db.User.findOne({
+                        where: { id: id },
+                        attributes: { exclude: ['password'] },
+                    });
+
+                    !userData &&
+                        resolve({
+                            errCode: 2,
+                            message: "the user isn't exist",
+                            userData,
+                        });
+
+                    resolve({
+                        errCode: 0,
+                        message: 'successful!',
+                        userData,
+                    });
+                }
+            }
+
+            // let userData = await db.User.
+        } catch (e) {
+            reject();
+        }
+    });
+};
+
 module.exports = {
     handleUserLogin: handleUserLogin,
+    handleGetUserInfo: handleGetUserInfo,
 };
