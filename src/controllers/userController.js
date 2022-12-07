@@ -28,7 +28,7 @@ let handleLogin = async (req, res) => {
 };
 
 let handleGetUserInfo = async (req, res) => {
-    let userId = req.body.id;
+    let userId = req.query.id;
 
     let data = await userService.handleGetUserInfo(userId);
 
@@ -37,7 +37,33 @@ let handleGetUserInfo = async (req, res) => {
     });
 };
 
+let handleCreateUser = async (req, res) => {
+    let data = await userService.createNewUser(req.body);
+
+    console.log(data);
+    return res.status(200).json({
+        ...data,
+    });
+};
+
+let handleDeleteUserInfo = async (req, res) => {
+    let response = await userService.deleteUserById(req.body.id);
+    return res.status(200).json({
+        ...response,
+    });
+};
+
+let handleUpdateUser = async (req, res) => {
+    let response = await userService.updateUserData(req.body);
+    return res.status(200).json({
+        ...response,
+    });
+};
+
 module.exports = {
     handleLogin: handleLogin,
     handleGetUserInfo: handleGetUserInfo,
+    handleCreateUser: handleCreateUser,
+    handleDeleteUserInfo: handleDeleteUserInfo,
+    handleUpdateUser: handleUpdateUser,
 };
