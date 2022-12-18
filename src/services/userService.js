@@ -39,7 +39,7 @@ let checkExistUser = (email) => {
             let user = await db.User.findOne({
                 where: { email: email },
                 raw: true,
-                attributes: ['email', 'password', 'roleId'],
+                attributes: ['email', 'password', 'lastName', 'roleId'],
             });
 
             user ? resolve(user) : resolve();
@@ -107,19 +107,21 @@ let createNewUser = (data) => {
                     errCode: 2,
                     message: 'the email had existed',
                 });
+            } else {
+                let hashPassword = await hashUserPassword(data.password);
+                await db.User.create({
+                    email: data.email,
+                    password: hashPassword,
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    address: data.address,
+                    phoneNumber: data.phoneNumber,
+                    gender: data.gender === '1' ? true : false,
+                    image: data.image,
+                    roleId: data.roleId,
+                    positionId: data.positionId,
+                });
             }
-            let hashPassword = await hashUserPassword(data.password);
-            await db.User.create({
-                email: data.email,
-                password: hashPassword,
-                firstName: data.firstName,
-                lastName: data.lastName,
-                address: data.address,
-                phoneNumber: data.phoneNumber,
-                gender: data.gender === '1' ? true : false,
-                image: data.image,
-                roleId: data.roleId,
-            });
 
             resolve({
                 errCode: 0,
@@ -169,7 +171,7 @@ let updateUserData = (data) => {
                 where: { id: data.id },
                 raw: false,
             });
-            console.log(user);
+            // console.log(user);
             if (user) {
                 data.email && (user.email = data.email);
                 data.password && (user.password = data.password);
@@ -193,10 +195,34 @@ let updateUserData = (data) => {
     });
 };
 
+let getAllcodeService = (type) => {
+    // console.log(type);
+    return new Promise(async (resolve, reject) => {
+        try {
+            let data = {};
+            if (type) {
+                data.errCode = 0;
+                data = await db.Allcode.findAll({
+                    where: { type },
+                });
+            } else {
+                data.errCode = 1;
+
+                data.data = 'missing parameter!';
+            }
+
+            resolve(data);
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
     handleUserLogin: handleUserLogin,
     handleGetUserInfo: handleGetUserInfo,
     createNewUser: createNewUser,
     deleteUserById,
     updateUserData,
+    getAllcodeService,
 };

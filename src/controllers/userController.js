@@ -40,13 +40,14 @@ let handleGetUserInfo = async (req, res) => {
 let handleCreateUser = async (req, res) => {
     let data = await userService.createNewUser(req.body);
 
-    console.log(data);
+    // console.log(data);
     return res.status(200).json({
         ...data,
     });
 };
 
 let handleDeleteUserInfo = async (req, res) => {
+    // console.log(req);
     let response = await userService.deleteUserById(req.body.id);
     return res.status(200).json({
         ...response,
@@ -60,10 +61,27 @@ let handleUpdateUser = async (req, res) => {
     });
 };
 
+let getAllcode = async (req, res) => {
+    try {
+        // console.log(req.query);
+        let type = req.query.type;
+
+        let data = await userService.getAllcodeService(type);
+
+        return res.status(200).json(data);
+    } catch (e) {
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Errow from server',
+        });
+    }
+};
+
 module.exports = {
     handleLogin: handleLogin,
     handleGetUserInfo: handleGetUserInfo,
     handleCreateUser: handleCreateUser,
     handleDeleteUserInfo: handleDeleteUserInfo,
     handleUpdateUser: handleUpdateUser,
+    getAllcode,
 };
