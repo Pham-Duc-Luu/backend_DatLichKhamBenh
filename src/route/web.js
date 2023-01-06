@@ -1,6 +1,7 @@
 import express from 'express';
 import homeController from '../controllers/homeController';
 import userController from '../controllers/userController';
+import doctorController from '../controllers/doctorController';
 
 let router = express.Router();
 
@@ -23,6 +24,13 @@ let initWebRoutes = (app) => {
     router.post('/api/create-user-info', userController.handleCreateUser);
     router.post('/api/update-user-info', userController.handleUpdateUser);
     router.delete('/api/delete-user-info', userController.handleDeleteUserInfo);
+
+    // call api to get doctor info by limit
+
+    router.get('/api/get-doctor-info', doctorController.handleGetDoctorInfo);
+    router.get('/api/get-all-doctor', doctorController.handleGetAllDoctor);
+    router.post('/api/save-detail-info-doctor', doctorController.handleSaveDetailInfoDoctor);
+    router.get('/api/get-doctor-detail-description-by-id', doctorController.handleGetDoctorDetail);
 
     router.get('/api/allCode', userController.getAllcode);
 

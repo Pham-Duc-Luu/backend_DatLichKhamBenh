@@ -60,7 +60,7 @@ let handleGetUserInfo = (id) => {
                     userData,
                 });
             } else {
-                if (id === 'ALL') {
+                if (id.toLowerCase() === 'all') {
                     userData = await db.User.findAll({
                         attributes: { exclude: ['password'] },
                     });
@@ -98,6 +98,7 @@ let handleGetUserInfo = (id) => {
 };
 
 let createNewUser = (data) => {
+    // console.log(data);
     return new Promise(async (resolve, reject) => {
         try {
             let existUser = await checkExistUser(data.email);
@@ -116,7 +117,7 @@ let createNewUser = (data) => {
                     lastName: data.lastName,
                     address: data.address,
                     phoneNumber: data.phoneNumber,
-                    gender: data.gender === '1' ? true : false,
+                    gender: data.gender,
                     image: data.image,
                     roleId: data.roleId,
                     positionId: data.positionId,
@@ -165,13 +166,13 @@ let deleteUserById = (id) => {
 };
 
 let updateUserData = (data) => {
+    // console.log(data);
     return new Promise(async (resolve, reject) => {
         try {
             let user = await db.User.findOne({
                 where: { id: data.id },
                 raw: false,
             });
-            // console.log(user);
             if (user) {
                 data.email && (user.email = data.email);
                 data.password && (user.password = data.password);
@@ -182,6 +183,7 @@ let updateUserData = (data) => {
                 data.gender && (user.gender = data.gender);
                 data.image && (user.image = data.image);
                 data.roleId && (user.roleId = data.roleId);
+                data.positionId && (user.positionId = data.positionId);
 
                 await user.save();
 
@@ -201,10 +203,19 @@ let getAllcodeService = (type) => {
         try {
             let data = {};
             if (type) {
-                data.errCode = 0;
-                data = await db.Allcode.findAll({
+                let res = await db.Allcode.findAll({
                     where: { type },
                 });
+
+                if (res.length === 0) {
+                    data.data = res;
+                    data.errCode = 2;
+                } else {
+                    // console.log(res)
+
+                    data.data = res;
+                    data.errCode = 0;
+                }
             } else {
                 data.errCode = 1;
 

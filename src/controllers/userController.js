@@ -48,10 +48,18 @@ let handleCreateUser = async (req, res) => {
 
 let handleDeleteUserInfo = async (req, res) => {
     // console.log(req);
-    let response = await userService.deleteUserById(req.body.id);
-    return res.status(200).json({
-        ...response,
-    });
+
+    if (req.body.id) {
+        let response = await userService.deleteUserById(req.body.id);
+        return res.status(200).json({
+            ...response,
+        });
+    } else {
+        return res.status(200).json({
+            errCode: 1,
+            message: 'missing parameter',
+        });
+    }
 };
 
 let handleUpdateUser = async (req, res) => {
