@@ -55,9 +55,36 @@ let handleGetDoctorDetail = async (req, res) => {
     }
 };
 
+let handleSavedoctorSchedule = async (req, res) => {
+    try {
+        let data = await doctorService.savedoctorSchedule(req.body);
+        return res.status(200).json(data);
+    } catch (e) {
+        console.log(e);
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Errow from server',
+        });
+    }
+};
+
+let handleGetDoctorScheduleById = async (req, res) => {
+    try {
+        let data = await doctorService.handleGetDoctorScheduleById(req.query);
+        return res.status(200).json(data);
+    } catch (e) {
+        console.log(e);
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Errow from server',
+        });
+    }
+};
 module.exports = {
     handleGetDoctorInfo,
     handleGetAllDoctor,
     handleSaveDetailInfoDoctor,
     handleGetDoctorDetail,
+    handleSavedoctorSchedule,
+    handleGetDoctorScheduleById,
 };

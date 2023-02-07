@@ -1,5 +1,7 @@
 var bcrypt = require('bcryptjs');
 import db from '../models/index';
+import _ from 'lodash';
+require('dotenv').config();
 
 const salt = bcrypt.genSaltSync(10);
 
@@ -52,7 +54,15 @@ let getAllDoctor = () => {
 let saveDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (data.contentHTML && data.contentMarkDown && data.doctorId) {
+            console.log(data);
+            if (
+                data.contentHTML &&
+                data.contentMarkDown &&
+                data.doctorId &&
+                data.price &&
+                data.payment &&
+                data.province
+            ) {
                 let isExist = await db.MarkDown.findOne({
                     where: { doctorId: data.doctorId },
                     raw: false,
@@ -79,6 +89,35 @@ let saveDetailInfoDoctor = (data) => {
                     });
                 }
 
+                let isExistInfo = await db.Doctor_infor.findOne({
+                    where: { doctorId: data.doctorId },
+                    raw: false,
+                });
+
+                if (isExistInfo) {
+                    isExistInfo.doctorId = data.doctorId;
+                    isExistInfo.priceId = data.price;
+                    isExistInfo.provinceId = data.province;
+                    isExistInfo.paymentId = data.payment;
+                    isExistInfo.addressClinic = data.clinicAddress;
+                    isExistInfo.nameClinic = data.clinicName;
+                    isExistInfo.note = data.note;
+                    isExistInfo.count = data.count;
+
+                    await isExistInfo.save();
+                } else {
+                    await db.Doctor_infor.create({
+                        doctorId: data.doctorId,
+                        priceId: data.price,
+                        provinceId: data.province,
+                        paymentId: data.payment,
+                        addressClinic: data.clinicAddress,
+                        nameClinic: data.clinicName,
+                        note: data.note,
+                        count: data.count,
+                    });
+                }
+
                 resolve({ errCode: 0, message: "Saved the doctor's details infomations" });
             }
             resolve({
@@ -96,6 +135,8 @@ let getDoctorDetail = (id) => {
         try {
             let data = await db.User.findOne({
                 where: { id: id },
+                attributes: { exclude: ['password'] },
+
                 // attributes: ['id', 'email', 'firstName', 'lastName'],
                 include: [
                     {
@@ -109,10 +150,32 @@ let getDoctorDetail = (id) => {
                             'clinicId',
                         ],
                     },
+                    {
+                        model: db.Allcode,
+                        as: 'positionData',
+                    },
+                    {
+                        model: db.Doctor_infor,
+                    },
                 ],
                 raw: true,
                 nest: true,
             });
+
+            let payment;
+            let price;
+            let province;
+
+            let AllCode = await db.Allcode.findAll();
+
+            console.log(AllCode);
+
+            if (data.Doctor_infor) {
+                let { paymentId, priceId, provinceId } = data.Doctor_infor;
+                data.Doctor_infor.payment = AllCode.find((item) => item.keyMap === paymentId);
+                data.Doctor_infor.price = AllCode.find((item) => item.keyMap === priceId);
+                data.Doctor_infor.province = AllCode.find((item) => item.keyMap === provinceId);
+            }
 
             data.image = Buffer.from(data.image).toString('binary');
 
@@ -128,9 +191,95 @@ let getDoctorDetail = (id) => {
     });
 };
 
+let savedoctorSchedule = (data) => {
+    let maxNumber = parseInt(process.env.MAX_SCHEDULE);
+
+    return new Promise(async (resolve, reject) => {
+        try {
+            let currArr = [];
+
+            // ADD MAX NUMBER
+            if (data && data.length > 0) {
+                currArr = data.map((item) => {
+                    return { ...item, maxNumber, date: '' + item.date };
+                });
+            }
+
+            let scheduleData = await db.schedule.findAll({
+                attributes: ['maxNumber', 'date', 'timeType', 'doctorId'],
+                raw: true,
+            });
+
+            let exist = [];
+            if (scheduleData && scheduleData.length > 0) {
+                exist = scheduleData.map((item) => {
+                    return { ...item };
+                });
+            }
+
+            let toCreate = _.differenceWith(currArr, exist, (a, b) => {
+                return a.timeType === b.timeType && a.date === b.date;
+            });
+
+            let createArray = toCreate.map((item) => {
+                return { ...item, date: item.date };
+            });
+
+            let response = await db.schedule.bulkCreate(createArray);
+
+            if (response) {
+                resolve({ errCode: 0, message: 'Create schedule successful' });
+            } else {
+                resolve({ errCode: 1, message: 'error' });
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+let handleGetDoctorScheduleById = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let { id, date } = data;
+
+            if (id && date) {
+                let response = await db.schedule.findAll({
+                    where: { doctorId: id, date },
+                    include: [{ model: db.Allcode, as: 'timeTypeData', attributes: ['valueEn', 'valueVi'] }],
+                    raw: true,
+                    nest: true,
+                });
+
+                console.log(data);
+                console.log(response);
+                if (response && response.length > 0) {
+                    resolve({
+                        errCode: 0,
+                        message: 'successful',
+                        data: response,
+                    });
+                } else {
+                    resolve({
+                        errCode: 1,
+                        message: 'the is no schedule',
+                    });
+                }
+            } else {
+                resolve({ errCode: 1, message: 'Missing parameter' });
+            }
+        } catch (e) {
+            console.log(e);
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
     getDoctorInfo,
     getAllDoctor,
     saveDetailInfoDoctor,
     getDoctorDetail,
+    savedoctorSchedule,
+    handleGetDoctorScheduleById,
 };
