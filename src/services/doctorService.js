@@ -54,7 +54,6 @@ let getAllDoctor = () => {
 let saveDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            console.log(data);
             if (
                 data.contentHTML &&
                 data.contentMarkDown &&
@@ -103,6 +102,8 @@ let saveDetailInfoDoctor = (data) => {
                     isExistInfo.nameClinic = data.clinicName;
                     isExistInfo.note = data.note;
                     isExistInfo.count = data.count;
+                    isExistInfo.specialistId = data.specialistId;
+                    isExistInfo.clinicId = data.clinicId;
 
                     await isExistInfo.save();
                 } else {
@@ -114,7 +115,10 @@ let saveDetailInfoDoctor = (data) => {
                         addressClinic: data.clinicAddress,
                         nameClinic: data.clinicName,
                         note: data.note,
+
                         count: data.count,
+                        specialistId: data.specialistId,
+                        clinicId: data.clinicId,
                     });
                 }
 
@@ -168,7 +172,7 @@ let getDoctorDetail = (id) => {
 
             let AllCode = await db.Allcode.findAll();
 
-            console.log(AllCode);
+            // console.log(AllCode);
 
             if (data.Doctor_infor) {
                 let { paymentId, priceId, provinceId } = data.Doctor_infor;
@@ -206,6 +210,7 @@ let savedoctorSchedule = (data) => {
             }
 
             let scheduleData = await db.schedule.findAll({
+                where: { date: currArr[0].date, doctorId: currArr[0].doctorId },
                 attributes: ['maxNumber', 'date', 'timeType', 'doctorId'],
                 raw: true,
             });
@@ -225,7 +230,7 @@ let savedoctorSchedule = (data) => {
                 return { ...item, date: item.date };
             });
 
-            let response = await db.schedule.bulkCreate(createArray);
+            let response = await db.schedule.bulkCreate(createArray, { raw: true });
 
             if (response) {
                 resolve({ errCode: 0, message: 'Create schedule successful' });
@@ -245,24 +250,26 @@ let handleGetDoctorScheduleById = (data) => {
 
             if (id && date) {
                 let response = await db.schedule.findAll({
-                    where: { doctorId: id, date },
+                    where: { doctorId: +id, date },
                     include: [{ model: db.Allcode, as: 'timeTypeData', attributes: ['valueEn', 'valueVi'] }],
                     raw: true,
                     nest: true,
                 });
 
-                console.log(data);
-                console.log(response);
+                // console.log(data);
+                // console.log(response);
                 if (response && response.length > 0) {
                     resolve({
                         errCode: 0,
                         message: 'successful',
                         data: response,
+                        income: data,
                     });
                 } else {
                     resolve({
                         errCode: 1,
                         message: 'the is no schedule',
+                        income: data,
                     });
                 }
             } else {
