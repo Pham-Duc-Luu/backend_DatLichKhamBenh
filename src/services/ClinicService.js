@@ -3,30 +3,29 @@ import db from '../models/index';
 import _, { reject } from 'lodash';
 require('dotenv').config();
 
-let handleSaveSpecialist = (data) => {
+let handleSaveClinic = async (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            let { name, description, image, descriptionMarkdown, descriptionHTML } = data;
+            let { address, name, descriptionHTML, descriptionMarkdown, image } = data;
 
-            if (!name || !description || !image || !descriptionMarkdown || !descriptionHTML) {
+            if (!address || !name || !descriptionHTML || !descriptionMarkdown || !image) {
                 resolve({ errCode: 1, message: 'Missing parameter!' });
             }
-
-            let specialist = await db.Specialty.create({
-                name: data.name,
-                descriptionMarkdown: data.descriptionMarkdown,
-                descriptionHTML: data.descriptionHTML,
-
-                image: data.image,
+            let clinic = await db.Clinic.create({
+                address: address,
+                name: name,
+                descriptionHTML: descriptionHTML,
+                descriptionMarkdown: descriptionMarkdown,
+                image: image,
             });
 
             let specialistMarkDown = await db.MarkDown.findOrCreate({
-                where: { specialtyId: specialist.id },
+                where: { clinicId: clinic.id },
                 defaults: {
                     contentHTML: data.descriptionHTML,
                     contentMarkDown: data.descriptionMarkdown,
                     description: data.description,
-                    specialtyId: data.specialtyId,
+                    clinicId: data.clinicId,
                 },
             });
 
@@ -38,10 +37,10 @@ let handleSaveSpecialist = (data) => {
     });
 };
 
-let getAllSpecialist = (limit) => {
+let handleGetAllClinic = (limit) => {
     return new Promise(async (resolve, reject) => {
         try {
-            let data = await db.Specialty.findAll({
+            let data = await db.Clinic.findAll({
                 limit: +limit,
             });
 
@@ -49,7 +48,7 @@ let getAllSpecialist = (limit) => {
                 return { ...item, image: Buffer.from(item.image).toString('binary') };
             });
             // console.log(data);
-            resolve({ errCode: 0, message: 'Create specialist successful', data });
+            resolve({ errCode: 0, data });
         } catch (e) {
             console.log(e);
             reject({ errCode: -1, message: 'Errow from server' });
@@ -57,11 +56,11 @@ let getAllSpecialist = (limit) => {
     });
 };
 
-let getDoctorBelongToSpecialist = (id) => {
+let getDoctorBelongToClinic = (id) => {
     return new Promise(async (resolve, reject) => {
         try {
             let data = await db.Doctor_infor.findAll({
-                where: { specialistId: +id },
+                where: { clinicId: +id },
                 include: [
                     {
                         model: db.User,
@@ -108,14 +107,54 @@ let getDoctorBelongToSpecialist = (id) => {
     });
 };
 
-let getSpecialist = (id) => {
+let getClinic = (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            let data = await db.Specialty.findOne({
+            let data = await db.Clinic.findOne({
                 where: { id: id },
             });
 
             data.image = Buffer.from(data.image).toString('binary');
+            resolve({ errCode: 0, data });
+        } catch (e) {
+            console.log(e);
+            reject({ errCode: -1, message: 'Errow from server' });
+        }
+    });
+};
+
+let getAllBooking = ({ id, date }) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!id || !date) {
+                resolve({ errCode: 1, message: 'Missing parameter' });
+            }
+
+            // console.log(id, date);
+            let data = await db.Booking.findAll({
+                where: {
+                    doctorId: +id,
+                    date: date,
+                },
+                include: [
+                    {
+                        model: db.User,
+                        attributes: { exclude: ['password'] },
+                    },
+                    {
+                        model: db.Allcode,
+                        attributes: { exclude: ['password'] },
+                        as: 'time',
+                    },
+                    {
+                        model: db.Allcode,
+                        attributes: { exclude: ['password'] },
+                        as: 'status',
+                    },
+                ],
+                raw: true,
+                nest: true,
+            });
 
             resolve({ errCode: 0, data });
         } catch (e) {
@@ -124,9 +163,39 @@ let getSpecialist = (id) => {
         }
     });
 };
+
+let saveBookingStatus = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // console.log(data);
+            if (data.id) {
+                let booking = await db.Booking.findOne({
+                    where: {
+                        id: data.id,
+                    },
+                    raw: false,
+                });
+
+                if (data.statu === 'S3') {
+                    booking.statuId = 'S3';
+                } else booking.statuId = 'S4';
+
+                await booking.save();
+                resolve({ errCode: 0, data: booking });
+            } else {
+                resolve({ errCode: 1, message: 'Missing parameter' });
+            }
+        } catch (e) {
+            console.log(e);
+            reject({ errCode: -1, message: 'Errow from server' });
+        }
+    });
+};
 module.exports = {
-    handleSaveSpecialist,
-    getAllSpecialist,
-    getDoctorBelongToSpecialist,
-    getSpecialist,
+    handleSaveClinic,
+    saveBookingStatus,
+    getAllBooking,
+    handleGetAllClinic,
+    getDoctorBelongToClinic,
+    getClinic,
 };

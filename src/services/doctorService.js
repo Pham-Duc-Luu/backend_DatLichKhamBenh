@@ -53,6 +53,7 @@ let getAllDoctor = () => {
 
 let saveDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
+        console.log(data);
         try {
             if (
                 data.contentHTML &&

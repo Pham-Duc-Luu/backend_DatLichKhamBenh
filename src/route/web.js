@@ -4,6 +4,7 @@ import userController from '../controllers/userController';
 import doctorController from '../controllers/doctorController';
 import patientController from '../controllers/patientController';
 import specialistController from '../controllers/specialistController';
+import clinicController from '../controllers/clinicController';
 
 let router = express.Router();
 
@@ -37,9 +38,25 @@ let initWebRoutes = (app) => {
     router.get('/api/get-doctor-schedule-by-id', doctorController.handleGetDoctorScheduleById);
     router.post('/api/create-patient-examination', patientController.handleCreatePatientExamination);
     router.post('/api/verify-booking', patientController.handleVerifyBooking);
+
+    //SPECIALIST
+
     router.post('/api/save-specialist-infomation', specialistController.handleSaveSpecialist);
+    router.get('/api/get-all-specialist', specialistController.getAllSpecialist);
     router.get('/api/get-specialist', specialistController.getSpecialist);
     router.post('/api/get-doctor-belong-to-specialist', specialistController.getDoctorBelongToSpecialist);
+    // Clinic
+
+    router.post('/api/save-clinic-infomation', clinicController.handleSaveClinic);
+    router.get('/api/get-all-clinic', clinicController.handleGetAllClinic);
+    router.get('/api/get-clinic', clinicController.getClinic);
+    router.post('/api/get-doctor-belong-to-clinic', clinicController.getDoctorBelongToClinic);
+
+    // booking
+
+    router.get('/api/get-all-booking', clinicController.getAllBooking);
+
+    router.post('/api/save-booking-status', clinicController.saveBookingStatus);
 
     router.get('/api/allCode', userController.getAllcode);
 
